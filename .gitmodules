@@ -1,0 +1,3 @@
+[submodule "pytorch-watertightness"]
+	path = pytorch-watertightness
+	url = https://github.com/kacperkan/pytorch-watertightness

@@ -1,0 +1,146 @@
+{
+    "results_root": "/3d_point_cloud/results",
+    "arch": "vae",
+    "clean_results_dir": false,
+    "cuda": true,
+    "gpu": 0,
+
+    "reconstruction_loss": "chamfer",
+    "dataset": "pointflow",
+    "data_dir": "/3d_point_cloud/dataset/pointflow",
+    "classes": [],
+    "disable_normalization": true,
+    "normalize_per_shape": false,
+    "normalize_std_per_axis": false,
+    "recenter_per_shape": false,
+    "n_points": 2048,
+    "reconstruction_coef": 0.05,
+
+    "seed": 2018,
+    "z_size": 2048,
+
+    "metrics": {
+        "distribution": "normal",
+        "beta_a": 0.01,
+        "beta_b": 0.01,
+        "normal_mu": 0.0,
+        "normal_std": 0.015,
+        "jsd_how_many_last_epochs": -1
+    },
+
+    "model": {
+        "HN": {
+            "use_bias": true,
+            "relu_slope": 0.2
+        },
+        "E": {
+            "use_bias": true,
+            "relu_slope": 0.2
+        },
+        "TN": {
+            "use_bias": true,
+            "relu_slope": 0.2,
+            "freeze_layers_learning": false,
+            "layer_out_channels": [32, 64, 128, 64]
+        },
+        "AtlasNet_TN": {
+            "bottleneck_size": 128,
+            "hidden_neurons": 64,
+            "num_layers": 2,
+            "batch_norm": true
+        }
+    },
+
+    "target_network_input": {
+        "normalization": {
+            "enable": true,
+            "type": "progressive",
+            "epoch": 100,
+            "sample_from_normal": false
+        }
+    },
+
+    "use_AtlasNet_TN": true,
+    "edge_length_regularization": true,
+    "regularize_normal_deviations": false,
+    "num_patches": 50000,
+    "eval_like_in_pointflow": true,
+
+    "experiments": {
+        "reconstruction": {
+            "execute": true,
+            "amount": 5,
+            "sphere_triangles_points": {
+                "use": false,
+                "method": "edge",
+                "depth": 2
+            },
+            "image_points": 2048,
+            "patch_points": 50
+        },
+
+        "interpolation_between_two_points": {
+            "execute": true,
+            "amount": 30,
+            "sphere_triangles_points": {
+                "use": false,
+                "method": "edge",
+                "depth": 2
+            },
+            "square_mesh": {
+                "use": false,
+                "grain": 7
+            },
+            "transitions": 21,
+            "image_points": 2048,
+            "patch_points": 50
+        },
+
+        "square_mesh": {
+            "execute": true,
+            "amount": 10,
+            "sphere_triangles_points": {
+                "use": false,
+                "method": "edge",
+                "depth": 2
+            },
+            "grain": 7,
+            "image_points": 2048
+        },
+
+        "fixed": {
+            "execute": true,
+            "mean": 0.0,
+            "std": 0.015,
+            "amount": 30,
+            "sphere_triangles_points": {
+                "use": false,
+                "method": "edge",
+                "depth": 2
+            },
+            "square_mesh": {
+                "use": false,
+                "grain": 7
+            },
+            "image_points": 2048,
+            "patch_points": 50
+        },
+
+        "interpolation": {
+            "execute": true,
+            "amount": 30,
+            "sphere_triangles_points": {
+                "use": false,
+                "method": "edge",
+                "depth": 2
+            },
+            "square_mesh": {
+                "use": false,
+                "grain": 7
+            },
+            "transitions": 10,
+            "image_points": 2048,
+            "patch_points": 50
+        }
+    }
+}
