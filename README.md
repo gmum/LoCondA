@@ -21,6 +21,13 @@ export CUDA_HOME=... # e.g. /var/lib/cuda-10.0/
 ./build_losses.sh
 ```
 
+#### Watertigthness measure
+```
+git submodule update --init --recursive
+cd pytorch-watertigthness
+make
+```
+
 
 ### Configuration (settings/hyperparams.json, settings/experiments.json):
   - HyperCloud
@@ -35,7 +42,7 @@ export CUDA_HOME=... # e.g. /var/lib/cuda-10.0/
     - number of patch points:
       - *LoCondA:grain* ^ 2 -> if regularization is not enabled
       - *LoCondA:edge_length_regularization:grain* ^ 2 -> if edge_length_regularization is enabled
-      - *LoCondA:regularize_normal_deviations* ^ 2 -> if regularize_normal_deviations is enabled
+      - *LoCondA:regularize_normal_deviations:grain* ^ 2 -> if regularize_normal_deviations is enabled
   - *reconstruction_loss* -> chamfer | earth_mover
   - *dataset* -> shapenet | pointflow
 
@@ -151,11 +158,7 @@ Experiments return the following files for each point cloud:
 
 #### Compute Mesh Metrics - Watertightness
 ```
-git submodule update --init --recursive
-cd pytorch-watertigthness
-make
-
-python experiments/compute_mesh_metrics.py 
+python experiments/compute_mesh_metrics.py
 Arguments:
 --shapenet SHAPENET     Path to the directory with ShapeNetCore.v2 meshes
 --to_compare TO_COMPARE [TO_COMPARE ...]
@@ -163,4 +166,6 @@ Arguments:
                         reconstructed meshes are located
 --classes CLASSES [CLASSES ...]
                         Classes to be used to compare
+
+Example of usage: python experiments/compute_mesh_metrics.py --shapenet /Datasets/ShapeNetCore.v2/ --to_compare /reconstructions/meshes/ --classes airplane car chair
 ```
