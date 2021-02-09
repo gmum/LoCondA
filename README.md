@@ -21,10 +21,10 @@ export CUDA_HOME=... # e.g. /var/lib/cuda-10.0/
 ./build_losses.sh
 ```
 
-#### Watertigthness measure
+#### Watertightness measure
 ```
 git submodule update --init --recursive
-cd pytorch-watertigthness
+cd pytorch-watertightness
 make
 ```
 
