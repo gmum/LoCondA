@@ -34,7 +34,7 @@ make
     - *target_network_input:normalization:type* -> progressive
     - *target_network_input:normalization:epoch* -> epoch for which the progressive normalization, of the points from uniform distribution, ends
   - LoCondA
-    - *LoCondA:use_AtlasNet_TN* -> use core AtlasNet function (Mapping2Dto3D) with input size changed from 2 to 5 as Target Network, otherwise HyperCloud Target Network will be used
+    - *LoCondA:use_AtlasNet_TN* -> use core AtlasNet ([AtlasNet: A Papier-Mâché Approach to Learning 3D Surface Generation](https://arxiv.org/abs/1802.05384)) function with input size changed from 2 to 5 as Target Network, otherwise HyperCloud Target Network will be used
     - *LoCondA:reconstruction_points* (optional) -> number of points reconstructed by HyperCloud Target Network
     - regularization of the length of the patch edges (at most one regularization can be enabled):
       - *LoCondA:edge_length_regularization*
