@@ -1,4 +1,4 @@
-# Modeling 3D Surface Manifolds with a Locally Conditioned Atlas (LoCondA)
+# Modeling 3D Surface Manifolds with a Locally Conditioned Atlas (LoCondA) [[ Paper ]](https://arxiv.org/abs/2102.05984)
 
 ## Requirements
 - dependencies stored in `requirements.txt`.
