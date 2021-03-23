@@ -51,6 +51,7 @@
         "regularization_coef": 0.1,
         "use_AtlasNet_TN": true,
         "reconstruction_points": 2048,
+        "num_patches": 100,
         "edge_length_regularization": {
             "use": true,
             "random_grid": false,

@@ -179,35 +179,37 @@ def main(config):
             target_networks_weights = hyper_network(codes)
             atlas_target_networks_weights = atlas_hyper_network(codes)
             reconstruction_points = config['LoCondA'].get('reconstruction_points', X.shape[2])
+            num_patches = config['LoCondA'].get('num_patches', reconstruction_points)
 
-            atlas_nearest_points = torch.zeros(X.shape[0], reconstruction_points * patch_points, X.shape[1]).to(device)
-            atlas_rec = torch.zeros(X.shape[0], reconstruction_points * patch_points, X.shape[1]).to(device)
-            regularization_loss = torch.zeros(X.shape[0], reconstruction_points).to(device)
+            atlas_nearest_points = torch.zeros(X.shape[0], num_patches * patch_points, X.shape[1]).to(device)
+            atlas_rec = torch.zeros(X.shape[0], num_patches * patch_points, X.shape[1]).to(device)
+            regularization_loss = torch.zeros(X.shape[0], num_patches).to(device)
             for j, (target_network_weights, atlas_target_network_weights) in enumerate(
                     zip(target_networks_weights, atlas_target_networks_weights)):
                 target_network = aae.TargetNetwork(config, target_network_weights).to(device)
                 target_network_input = generate_points(config=config, epoch=hc_epoch, size=(reconstruction_points,
                                                                                             X.shape[1]))
                 X_rec = target_network(target_network_input.to(device))
-                x_rec_kneighbors = X_rec
 
                 clf = KNeighborsClassifier(patch_points + 1)
                 clf.fit(X_rec.cpu().numpy(), np.ones(len(X_rec)))
 
+                indices = np.random.choice(reconstruction_points, size=num_patches, replace=False)
+
                 atlas_target_network = atlas_target_network_class(config, atlas_target_network_weights, 5).to(device)
-                atlas_input = generate_points_from_uniform_distribution(size=(X_rec.shape[0] * patch_points, 2),
+                atlas_input = generate_points_from_uniform_distribution(size=(num_patches * patch_points, 2),
                                                                         low=0, high=1, norm=False)
                 if config['LoCondA']['edge_length_regularization']['use']:
                     if config['LoCondA']['edge_length_regularization']['random_grid']:
-                        faces = torch.zeros(X_rec.shape[0], 2 * patch_points - 2, X_rec.shape[1])
-                        for z, points in enumerate(atlas_input.reshape(X_rec.shape[0], patch_points, 2)):
+                        faces = torch.zeros(num_patches, 2 * patch_points - 2, X_rec.shape[1])
+                        for z, points in enumerate(atlas_input.reshape(num_patches, patch_points, 2)):
                             simplices = torch.from_numpy(Delaunay(points).simplices)
                             faces[z, :simplices.shape[0]] = simplices
                     else:
                         grain = config['LoCondA']['edge_length_regularization']['grain']
                         vertices, faces = generate_square(grain)
-                        atlas_input = vertices.repeat(X_rec.shape[0], 1)
-                        faces = faces.repeat(X_rec.shape[0], 1).reshape(X_rec.shape[0], faces.shape[0], 3)
+                        atlas_input = vertices.repeat(num_patches, 1)
+                        faces = faces.repeat(num_patches, 1).reshape(num_patches, faces.shape[0], 3)
                 elif config['LoCondA']['regularize_normal_deviations']['use']:
                     if patch_dataset is None:
                         log.info('Generating patch_dataset')
@@ -215,16 +217,16 @@ def main(config):
                             config['LoCondA']['regularize_normal_deviations']['grain'],
                             config['LoCondA']['regularize_normal_deviations']['num_patches']
                         )
-                    atlas_input, faces = patch_dataset.sample_patches_vertices(X_rec.shape[0])
-                    atlas_input = atlas_input.reshape(X_rec.shape[0] * patch_points, 2)
+                    atlas_input, faces = patch_dataset.sample_patches_vertices(num_patches)
+                    atlas_input = atlas_input.reshape(num_patches * patch_points, 2)
 
                 atlas_target_network_input = torch.cat([
-                    target_network_input[:, None, :].expand(X_rec.shape[0], patch_points, X_rec.shape[1]).reshape(
-                        X_rec.shape[0] * patch_points, X_rec.shape[1]),
+                    target_network_input[indices, None, :].expand(num_patches, patch_points, X_rec.shape[1]).reshape(
+                        num_patches * patch_points, X_rec.shape[1]),
                     atlas_input
                 ], 1).to(device)
 
-                nearest_points = clf.kneighbors(x_rec_kneighbors.cpu().numpy(), return_distance=False)
+                nearest_points = clf.kneighbors(X_rec[indices].cpu().numpy(), return_distance=False)
                 x_rec_nearest_points = X_rec[nearest_points[:, 1:].reshape(-1)]
 
                 atlas_rec[j] = atlas_target_network(atlas_target_network_input.to(device))
@@ -232,19 +234,19 @@ def main(config):
 
                 if config['LoCondA']['edge_length_regularization']['use']:
                     edges = torch.cat([faces[:, :, :2], faces[:, :, 1:], faces[:, :, (0, 2)]], 1).long()
-                    vertices_rec = atlas_rec[j].reshape(X_rec.shape[0], patch_points, X_rec.shape[1])
+                    vertices_rec = atlas_rec[j].reshape(num_patches, patch_points, X_rec.shape[1])
                     regularization_loss[j] = torch.sum(
                         torch.norm(vertices_rec[-1, edges[:, :, 0], :] - vertices_rec[-1, edges[:, :, 1], :], dim=2),
                         dim=1)
                 elif config['LoCondA']['regularize_normal_deviations']['use']:
-                    vertices_rec = atlas_rec[j].clone().reshape((X_rec.shape[0], patch_points, X_rec.shape[1]))
+                    vertices_rec = atlas_rec[j].clone().reshape((num_patches, patch_points, X_rec.shape[1]))
                     regularization_loss[j] = patch_dataset.calculate_total_cosine_distance_of_normals(vertices_rec,
                                                                                                       faces,
                                                                                                       device)
 
             losses = torch.zeros(patch_points).to(device)
             for bs in range(patch_points):
-                start, end = bs * reconstruction_points, (bs + 1) * reconstruction_points
+                start, end = bs * num_patches, (bs + 1) * num_patches
                 losses[bs] = reconstruction_loss(
                     atlas_nearest_points[:, start:end, :],
                     atlas_rec[:, start:end, :]
